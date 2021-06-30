@@ -8,6 +8,34 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/catalog', async (req, res) => {
+    const { page } = req.query;
+    let querySetting = "";
+
+    try{
+        if (!page){
+            querySetting = '';
+        } else if (page==='Nacional'){
+            querySetting = `WHERE category = 'Nacional'`
+        } else if (page==='Internacional'){
+            querySetting = `WHERE category = 'Internacional'`
+        } else{
+            return res.sendStatus(501)
+        }
+
+        const result = await connection.query(`
+            SELECT name, "urlImageFront", price 
+            FROM products
+            ${querySetting}`
+        );
+        res.send(result.rows)
+
+    } catch(e){
+        console.log(e);
+        res.sendStatus(500);
+    }
+});
+
 console.log ("Servidor rodando!");
 
 app.post('/sign-up', async (req, res) => {
