@@ -24,7 +24,7 @@ app.get('/catalog', async (req, res) => {
         }
 
         const result = await connection.query(`
-            SELECT name, "urlImageFront", price 
+            SELECT id, name, "urlImageFront", price 
             FROM products
             ${querySetting}`
         );
