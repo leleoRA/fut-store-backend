@@ -93,4 +93,16 @@ app.post('/log-in', async (req, res) => {
     }
 });
 
+app.get('/old-orders/:id', async (req, res) => {
+    const id = parseInt(req.params.id);
+    try {
+        const pickOrders = await connection.query('SELECT * FROM purchases WHERE "userId"=$1', [id]);
+        console.log("Requisição feita!");
+        res.send(pickOrders.rows);
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+});
+
 export default app;
