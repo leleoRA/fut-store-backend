@@ -117,13 +117,22 @@ app.post('/new-purchase', async (req, res) => {
     } = req.body;
     let todayDate = moment().format('DD/MM/YY');
     try {
-        products.forEach(async p => {
-            await connection.query(`
-                INSERT INTO purchases ("userId", date, product, size, price, "cardNumber", "cardName", "expiryDate", "securityCode")
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            `, [userId, todayDate, p.product, p.size, p.price, cardNumber, cardName, expiryDate, securityCode]);
-        })
-        res.sendStatus(201);
+        const cardNumberRegex = /^[0-9]{16}$/;
+        const securityCodeRegex = /^[0-9]{3}$/;
+        let validCardNumber = cardNumberRegex.test(cardNumber); //retorna true ou false
+        let validSecurityCode = securityCodeRegex.test(securityCode); //retorna true ou false
+
+        if(validCardNumber && validSecurityCode) { 
+            products.forEach(async p => {
+                await connection.query(`
+                    INSERT INTO purchases ("userId", date, product, size, price, "cardNumber", "cardName", "expiryDate", "securityCode")
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                `, [userId, todayDate, p.product, p.size, p.price, cardNumber, cardName, expiryDate, securityCode]);
+            })
+            res.sendStatus(201);
+        } else {
+            res.sendStatus(403)
+        }
     } catch (error) {
         console.log(error);
         res.sendStatus(500);
