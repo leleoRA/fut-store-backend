@@ -7,8 +7,8 @@ const connection = new Pool({
     password: '123456',
     host: 'localhost',
     port: 5432,
-    // database: 'fut_store_database'
-    database: 'bancoteste'
+    database: 'fut_store_database'
+    // database: 'bancoteste'
 });
 
 export default connection;
