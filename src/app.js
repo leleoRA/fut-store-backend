@@ -3,6 +3,7 @@ import cors from 'cors';
 import bcrypt from 'bcrypt';
 import { v4 as uuid } from 'uuid';
 import connection from './database.js';
+import moment from 'moment';
 
 const app = express();
 app.use(cors());
@@ -88,6 +89,17 @@ app.get('/catalog', async (req, res) => {
 
     } catch(e){
         console.log(e);
+    }
+});
+
+app.get('/old-orders/:id', async (req, res) => {
+    const id = parseInt(req.params.id);
+    try {
+        const pickOrders = await connection.query('SELECT * FROM purchases WHERE "userId"=$1', [id]);
+        console.log("Requisição feita!");
+        res.send(pickOrders.rows);
+    } catch (error) {
+        console.log(error);
         res.sendStatus(500);
     }
 });
@@ -105,6 +117,39 @@ app.get('/products/:id', async (req, res) => {
 
     } catch(e){
         console.log(e);
+        res.sendStatus(500);
+    }
+});
+
+app.post('/new-purchase', async (req, res) => {
+    const {
+        userId,
+        products,
+        cardName,
+        cardNumber,
+        expiryDate,
+        securityCode
+    } = req.body;
+    let todayDate = moment().format('DD/MM/YY');
+    try {
+        const cardNumberRegex = /^[0-9]{16}$/;
+        const securityCodeRegex = /^[0-9]{3}$/;
+        let validCardNumber = cardNumberRegex.test(cardNumber); //retorna true ou false
+        let validSecurityCode = securityCodeRegex.test(securityCode); //retorna true ou false
+
+        if(validCardNumber && validSecurityCode) { 
+            products.forEach(async p => {
+                await connection.query(`
+                    INSERT INTO purchases ("userId", date, product, size, price, "cardNumber", "cardName", "expiryDate", "securityCode")
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                `, [userId, todayDate, p.product, p.size, p.price, cardNumber, cardName, expiryDate, securityCode]);
+            })
+            res.sendStatus(201);
+        } else {
+            res.sendStatus(403)
+        }
+    } catch (error) {
+        console.log(error);
         res.sendStatus(500);
     }
 });
