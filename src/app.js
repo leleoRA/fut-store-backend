@@ -9,35 +9,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/catalog', async (req, res) => {
-    const { page } = req.query;
-    let querySetting = "";
-
-    try{
-        if (!page){
-            querySetting = '';
-        } else if (page==='Nacional'){
-            querySetting = `WHERE category = 'Nacional'`
-        } else if (page==='Internacional'){
-            querySetting = `WHERE category = 'Internacional'`
-        } else{
-            return res.sendStatus(501)
-        }
-
-        const result = await connection.query(`
-            SELECT name, "urlImageFront", price 
-            FROM products
-            ${querySetting}`
-        );
-        res.send(result.rows)
-
-    } catch(e){
-        console.log(e);
-        res.sendStatus(500);
-    }
-});
-
-console.log ("Servidor rodando!");
 
 app.post('/sign-up', async (req, res) => {
     const { email, password, username } = req.body;
@@ -94,6 +65,33 @@ app.post('/log-in', async (req, res) => {
     }
 });
 
+app.get('/catalog', async (req, res) => {
+    const { page } = req.query;
+    let querySetting = "";
+
+    try{
+        if (!page){
+            querySetting = 'ORDER BY team';
+        } else if (page==='Nacional'){
+            querySetting = `WHERE category = 'Nacional' ORDER BY team`
+        } else if (page==='Internacional'){
+            querySetting = `WHERE category = 'Internacional' ORDER BY team`
+        } else{
+            return res.sendStatus(501)
+        }
+
+        const result = await connection.query(`
+            SELECT id, name, "urlImageFront", price 
+            FROM products
+            ${querySetting}`
+        );
+        res.send(result.rows)
+
+    } catch(e){
+        console.log(e);
+    }
+});
+
 app.get('/old-orders/:id', async (req, res) => {
     const id = parseInt(req.params.id);
     try {
@@ -102,6 +100,23 @@ app.get('/old-orders/:id', async (req, res) => {
         res.send(pickOrders.rows);
     } catch (error) {
         console.log(error);
+        res.sendStatus(500);
+    }
+});
+
+app.get('/products/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try{
+        const result = await connection.query('SELECT * FROM products WHERE id = $1', [id]);
+        if (result.rowCount===0){
+            return res.sendStatus(404);
+        } else{
+            return res.send(result.rows[0]);
+        }
+
+    } catch(e){
+        console.log(e);
         res.sendStatus(500);
     }
 });
@@ -137,6 +152,6 @@ app.post('/new-purchase', async (req, res) => {
         console.log(error);
         res.sendStatus(500);
     }
-})
+});
 
 export default app;
